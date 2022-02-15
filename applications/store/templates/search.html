@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}<h1>Search</h1>{% endblock %}
+
+{% block content %}
+<h2>Search results for:</h2>
+<h4>{{query}}</h4>
+{% with products as product_lists %}
+	{% include 'parts/product_list.html' %}
+{% endwith %}
+
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 5">
+		<div id="liveToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+		    <div class="toast-header">
+		      <strong class="me-auto">Success</strong>
+		      <small>11 mins ago</small>
+		      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+		    </div>
+		    <div class="toast-body">
+		       {{ product.title }} added to your cart
+		    </div>
+		</div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+	var addToCart = Vue.createApp({
+		data() {
+			return {
+				msg:''
+			}
+		},
+		methods:{
+			addToCart(product_id) {
+				console.log(product_id)
+
+				var data = {'product_id':product_id,'update':false,'quantity':1}
+				var url = '/api/add_to_cart/'
+
+				var option = {
+					animation:true,
+					delay:2000
+				}
+				var element = document.getElementById('liveToast')
+				var a = new bootstrap.Toast(element,option)
+				a.show()
+
+				fetch(url,{
+					method:'POST',
+					headers:{
+						'Content-Type':'applications/json',
+						'X-CSRFToken':'{{csrf_token}}'
+					},
+					body:JSON.stringify(data)
+				})
+				.then((response)=>{
+					console.log(response)
+				})
+				.catch(function(error){
+					console.log(error)
+				})
+			}
+		}
+	})
+
+	const vm = addToCart.mount('#category-addToCart')
+</script>
+{% endblock %}

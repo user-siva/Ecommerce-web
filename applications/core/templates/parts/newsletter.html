@@ -1,0 +1,47 @@
+<section class="bg-dark text-center p-3 mt-2" id="newsletter">
+	<div class="container p-3">
+		<h1 class="text-center m-3 text-white">SUBSCRIBE TO OUR NEWSLETTER</h1>
+		<form v-on:submit.prevent='onSubmit'>
+			<input type="email" name="email" class='form-control col-5' placeholder="Enter Your Email Id" v-model='email'>
+			<button type="submit" class="btn btn-info" style="margin: 10px;">Subscribe  <i class="fa fa-envelope"></i>
+			</button>
+		</form>
+	</div>
+</section>
+	
+<script type="text/javascript">
+	var newsletterApp = Vue.createApp({
+		data() {
+			return {
+				email:''
+			}
+		},
+		methods: {
+			onSubmit() {
+				console.log('submitted')
+
+				var data = {'email':this.email}
+				var url = '/api/add_subscriber/'
+
+				fetch(url,{
+					method:'POST',
+					headers:{
+						'Content-Type':'applications/json',
+						'X-CSRFToken':'{{csrf_token}}'
+					},
+					body:JSON.stringify(data)
+				})
+				.then((response)=>{
+					return response.json()
+				})
+				.then((data)=>{
+					console.log(data)
+				})
+				.catch(function(error){
+					console.log(error)
+				})
+			}
+		}
+	})
+	newsletterApp.mount('#newsletter')
+</script>

@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<h1>Account Information</h1>
+
+<p><strong>Name:</strong>{{request.user.get_full_name}}</p>
+<p><strong>Email:</strong>{{request.user.email}}</p>
+
+<h2>My Orders</h2>
+{% for order in request.user.orders.all %}
+<article>
+	<div>
+		<div style="float: left;">
+			<h6>{{order.created_at}}</h6>
+		</div>
+		<div style="float: right;margin-right: 5px">
+			<h6><strong>Status:</strong>{{order.status}}</h6>
+		</div>
+	</div>
+	<div>
+		<table class="table">
+			<thead>
+			    <tr>
+			      <th scope="col">Title</th>
+			      <th scope="col">Quantity</th>
+			      <th scope="col">Price</th>
+			    </tr>
+			</thead>
+			<tbody>
+			    {% for item in order.items.all %}
+			    	<tr>
+				      <td>{{item.product.title}}</td>
+				      <td>{{item.quantity}}</td>
+				      <td>${{item.price}}</td>
+				    </tr>
+			    {% endfor %}
+			</tbody>
+			<tfoot>
+				<tr>
+					<td>Total</td>
+					<td>{{order.get_total_quantity}}</td>
+					<td>${{order.paid_amount}}</td>
+				</tr>
+			</tfoot>
+		</table>
+	</div>
+</article>
+{% empty %}
+	<p>You don't have any orders yet.....</p>
+{% endfor %}
+
+{% endblock %}

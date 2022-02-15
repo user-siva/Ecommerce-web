@@ -1,0 +1,335 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div id="cartapp">
+	<h3>[[msg]]</h3>
+
+		<div v-if='products.length > 0'>
+		<div class="container-fluid">
+			<table class="table table-hover">
+				<thead>
+					<th>Product</th>
+					<th>Quantity</th>
+					<th>Price</th>
+					<th></th>
+				</thead>
+
+				<tbody>
+						<tr v-for='product in products'>
+							<td>[[product.title]]</td>
+							<td>
+							<div style="display: flex;">
+								<div>[[product.quantity]]</div>
+								<div>
+									<img src="{% static 'images/arrow-up.png' %}" alt="arrow-up" class="arrows" @click='incrementQuantity(product.id,product.quantity,product.price)'>
+									<img src="{% static 'images/arrow-down.png' %}" alt="arrow-down" class="arrows" @click='decrementQuantity(product.id,product.quantity,product.price)'>
+								</div>
+							</div>
+							</td>
+							<td>[[product.total_price]]</td>
+							<td>
+								<button @click='RemovefromCart(product.id)' class="btn btn-warning">Remove</button>
+							</td>
+						</tr>						
+				</tbody>
+
+				<tfoot>
+					<tr>
+						<td>Total Cost:</td>
+						<td>[[ numItems ]]</td>
+						<td><b>$[[ totalCost ]]</b></td>
+					</tr>
+					<tr v-if='coupon_value'>
+						<td colspan="2">Total Cost with Coupon:</td>
+						<td>[[ totalCostWithCoupon ]]</td>
+					</tr>
+				</tfoot>
+			</table>
+			<hr>
+			<div class="col-4">
+				<div class="input-group mb-3" style="margin-right: 450px;">
+				<label style="margin-right: 30px;"><b>Coupon Code:</b></label>
+				<input type="hidden" v-model='coupon_value' class="form-control"><br>
+				<input type="text" class="form-control" v-model='coupon_code' aria-describedby="button-addon2">
+				<button class="btn btn-secondary" type="button" id="button-addon2" @click='applyCoupon()'>
+				Apply</button>
+				</div>
+			</div>
+			<div v-if='couponcodeError'>
+				<div class="alert alert-warning alert-dismissible fade show" role="alert">
+				<strong>Code is invalid!</strong> You should check in on some of those fields above.
+				<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+				</div>
+			</div>
+			<div>
+				Continue as guest user or <a href="{% url 'login' %}">login</a>/<a href="{% url 'signup' %}">signup</a>
+			</div>
+		</div>
+		<form id="form" v-on:submit.prevent='buy()' style="margin-left: 10px;margin-right: 30px; margin-top: 30px;">
+				{% csrf_token %}
+				<h2>Contact Information:</h2>
+				<div id="user-info" class="d-flex">
+					<div class="col-6" style="margin-right: 20px;">
+						<div class="form-field" style="margin-top: 10px;">
+						<input required class="form-control" type="text" name="first_name" placeholder="first_name" 
+						v-model="first_name">
+						</div>
+						<div class="form-field" style="margin-top: 10px;">
+							<input class="form-control" type="text" name="last_name" placeholder="last_name" 
+							v-model="last_name">
+						</div>
+						<div class="form-field" style="margin-top: 10px;">
+							<input required class="form-control" type="email" name="email" placeholder="Email.."
+							v-model="email">
+						</div>
+					</div>
+					<div class="col-6">
+						<div class="form-field" style="margin-top: 10px;">
+						<input class="form-control" type="text" name="address" placeholder="Address.."
+						v-model="address">
+						</div>
+						<div class="form-field" style="margin-top: 10px;">
+							<input class="form-control" type="text" name="zipcode" placeholder="Zip code.."
+							v-model="zipcode">
+						</div>
+						<div class="form-field" style="margin-top: 10px;">
+							<input class="form-control" type="text" name="place" placeholder="place.."
+							v-model="place">
+						</div>
+					</div>
+				</div>
+			<button class="btn btn-danger" @click='buy()' style="margin-top: 10px;">Checkout</button>	
+		</form>
+		</div>
+		<p v-else>Your cart is empty</p>
+
+
+</div>
+
+{% endblock %}
+
+<script>
+	var alertList = document.querySelectorAll('.alert')
+	alertList.forEach(function (alert) {
+	  new bootstrap.Alert(alert)
+	})
+</script>
+
+{% block scripts %}
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+
+	var cartapp = Vue.createApp({
+		delimiters: ['[[', ']]'],
+		data() {
+			return {
+
+				msg:'cart',
+				products: [{{productstring|safe}}], 
+
+				first_name:'{{first_name}}',
+				last_name:'{{last_name}}',
+				email:'{{email}}',
+				address:'',
+				zipcode:'',
+				place:'',
+				coupon_value:0,
+				coupon_code:'',
+				couponcodeError:false,
+
+				}
+			},
+		computed:{
+    		numItems:function() {
+        		return store.state.numItems
+      		},
+      		totalCost:function() {
+      			return store.state.totalCost
+      		},
+      		totalCostWithCoupon:function() {
+      			if(this.coupon_value>0) {
+      				return store.state.totalCost * (parseInt(this.coupon_value)/100)
+      			}
+      			else {
+      				return store.state.totalCost
+      			}
+      		}
+      	},
+		methods:{
+			applyCoupon() {
+				if (this.coupon_code!=='') {
+					fetch('/api/can_use/?coupon_code=' + this.coupon_code,{
+						method:'GET'
+					})
+					.then((response) => {
+						return response.json()
+					})
+					.then((data) => {
+						if(data.amount) {
+							this.couponcodeError = false
+							this.coupon_value = parseInt(data.amount)
+						}
+						else {
+							this.coupon_value = 0
+							this.couponcodeError = true
+						}
+					})
+				}
+				else {
+					this.couponcodeError = true
+				}
+			},
+			buy() {
+
+				var stripe = Stripe('{{public_key}}')
+				const url = '/api/create_checkout_session/'
+
+				var data = {
+					'first_name':this.first_name,
+					'last_name':this.last_name,
+					'email':this.email,
+					'address':this.address,
+					'zipcode':this.zipcode,
+					'place':this.place,
+					'coupon_code': this.coupon_code,
+				};
+				
+				fetch(url,{
+					method:'POST',
+					headers:{
+						'Content-Type':'applications/json',
+						'X-CSRFToken':'{{csrf_token}}'
+					},
+					body:JSON.stringify(data),
+				})
+				.then(function(response) {
+					return response.json()
+				})
+				.then(function(session) {
+					console.log(data)
+					return stripe.redirectToCheckout({sessionId:session.session.id})
+				})
+				.then(function(result)  {
+					if(result.error) {
+						alert(result.error.message)}
+				})
+				.catch(function(error) {
+					console.log('Error:',error)
+				})
+
+			},
+			RemovefromCart(product_id) {
+				console.log('product_id:',product_id)
+				var data = {'product_id':product_id,}
+				const url = '/api/remove_from_cart/'
+
+				fetch(url,{
+					method:'POST',
+					headers:{
+						'Content-Type':'applications/json',
+						'X-CSRFToken':'{{csrf_token}}'
+					},
+					body:JSON.stringify(data)
+				})
+				.then((response)=>{
+					console.log(response)
+					this.products = this.products.filter(product => product.id !== product_id)
+					console.log(this.products)
+					location.reload()
+				})
+				.catch(function(error){
+					console.log(error)
+				})				
+
+			},
+			incrementQuantity(product_id,quantity,price) {
+				console.log('product_id:',product_id)
+				for (var i=0;i<this.products.length;i++) {
+						var product = this.products[i];
+						if (product.id === product_id) {
+							if ( quantity < product.num_available ) {
+
+								//since quantity is str , we use parseInt
+								var data = {'product_id':product_id,'update':true,'quantity':parseInt(quantity) + 1} 
+								const url = '/api/add_to_cart/'
+
+								store.commit('increment',1)
+								store.commit('changeCost',parseFloat(price))
+
+								fetch(url,{
+									method:'POST',
+									headers:{
+										'Content-Type':'applications/json',
+										'X-CSRFToken':'{{csrf_token}}'
+									},
+									body:JSON.stringify(data)
+								})
+								.then((response)=>{
+									console.log(response)
+									for (var i=0;i<this.products.length;i++) {
+										var product = this.products[i];
+										if (product.id === product_id) {
+											product.quantity = parseInt(product.quantity) + 1
+											product.total_price = parseInt(product.quantity) * parseFloat(product.price)
+										}
+									}
+								})
+								.catch(function(error){
+									console.log(error)
+								})				
+
+							}
+							else {
+								alert('Oops! No more available in stock')
+								console.log(quantity)
+								console.log(product.num_available)
+
+								}
+						}
+					}
+			},
+			decrementQuantity(product_id,quantity,price) {
+				console.log('product_id:',product_id)
+				//since quantity is str , we use parseInt
+				var data = {'product_id':product_id,'update':true,'quantity':parseInt(quantity) - 1} 
+				const url = '/api/add_to_cart/'
+
+				if (parseInt(quantity) - 1 === 0) {
+					this.RemovefromCart(product_id)
+				}
+				else {
+					store.commit('increment',-1)
+					store.commit('changeCost',parseFloat(price))
+
+					fetch(url,{
+					method:'POST',
+					headers:{
+						'Content-Type':'applications/json',
+						'X-CSRFToken':'{{csrf_token}}'
+					},
+					body:JSON.stringify(data)
+					})
+					.then((response)=>{
+						console.log(response)
+						for (var i=0;i<this.products.length;i++) {
+							var product = this.products[i];
+							if (product.id === product_id) {
+								product.quantity = parseInt(product.quantity) - 1
+								product.total_price = parseInt(product.quantity) * parseFloat(product.price)
+							}
+						}
+					})
+					.catch(function(error){
+						console.log(error)
+					})	
+				}			
+
+			},
+		}
+	})
+	cartapp.use(store)
+	const createApp = cartapp.mount('#cartapp')
+</script>
+{% endblock %}

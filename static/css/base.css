@@ -1,0 +1,22 @@
+/* Custom page CSS
+-------------------------------------------------- */
+/* Not required for template or sticky footer method. */
+.body {
+	font-family: 'Heebo', sans-serif;
+	font-family: 'Source Sans Pro', sans-serif;
+}
+#cards {
+	 box-shadow: 0 0 13px 0 rgba(100, 100, 100, 0.26);
+}
+.arrows {
+	width: 12px;
+	cursor: pointer;
+	display: block;
+	margin-top: 5px;
+	margin-left: 5px;
+	transition:.1s;
+}
+
+.arrows:hover {
+	opacity: 0.6;
+}
