@@ -10,8 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
-STRIPE_API_KEY_PUBLISHABLE = 'pk_test_51IHBTsIG3fZKhmhBYD2CdGMqNXz3IIG3CkdXE6rr86t17IvxCcuM9DiI24iI9AKbMwvlXeSEISY4tDMCSEGifOWM00cwabv7dK'
-STRIPE_API_KEY_HIDDEN = 'sk_test_51IHBTsIG3fZKhmhBK0PTBKNOO5QA2E5tXqgIDQU54x2HyiYrNGxFvqgxKVNKaWsswaMs907vHsFb7N8gf6oWNaWG00S9K9jq8a'
+STRIPE_API_KEY_PUBLISHABLE = ''
+STRIPE_API_KEY_HIDDEN = ''
 
 
 import os
@@ -24,7 +24,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'x2q4^()@$m+$klw2s$=u1t&^j9cpg_tscmjmmi=3zpbczgkj*j'
+SECRET_KEY = ''
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -37,8 +37,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_USE_TLS = True
 EMAIL_PORT = 587
-EMAIL_HOST_USER = 'sivag0503@gmail.com'
-EMAIL_HOST_PASSWORD = "<name='siva@!'>"
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ""
 
 
 
